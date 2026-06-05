@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 const themeScript = `
 (function () {
   try {
+    // Default to light mode; only go dark if the user explicitly chose it before.
     var stored = localStorage.getItem('tdc-theme');
-    var theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    if (theme === 'dark') document.documentElement.classList.add('dark');
+    if (stored === 'dark') document.documentElement.classList.add('dark');
   } catch (e) {}
 })();
 `;
