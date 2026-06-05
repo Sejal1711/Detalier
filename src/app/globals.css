@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 20 14.3% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14.3% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14.3% 4.1%;
+    --primary: 347 49% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 60% 96%;
+    --secondary-foreground: 60 3% 17%;
+    --muted: 30 25% 95%;
+    --muted-foreground: 30 6% 47%;
+    --accent: 340 50% 96%;
+    --accent-foreground: 60 3% 17%;
+    --destructive: 0 58% 41%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 91%;
+    --input: 0 0% 91%;
+    --ring: 347 49% 59%;
+    --radius: 0.5rem;
+  }
+}
+
+/* ── V2 theme tokens (consumed by the inline-styled `C` object in lib/theme.ts) ── */
+:root {
+  --c-primary:    #C9637A;
+  --c-bg:         #FDF6F0;
+  --c-surface:    #FFFFFF;
+  --c-blush:      #F4C0D1;
+  --c-blush-bg:   #FCF0F4;
+  --c-text:       #2C2C2A;
+  --c-text-sec:   #7A7570;
+  --c-border:     rgba(0, 0, 0, 0.08);
+  --c-divider:    rgba(0, 0, 0, 0.05);
+  --c-success:    #3B6D11;
+  --c-danger:     #A32D2D;
+  --c-hover:      #F7F3EF;
+  --c-muted:      #F1F0EF;
+  --c-danger-bg:  #FFF5F5;
+  --c-toggle-off: #DAD6D1;
+  color-scheme: light;
+}
+
+.dark {
+  --c-primary:    #C9637A;
+  --c-bg:         #1A1613;
+  --c-surface:    #241F19;
+  --c-blush:      #F4C0D1;
+  --c-blush-bg:   #2E2329;
+  --c-text:       #EFEAE3;
+  --c-text-sec:   #A39D95;
+  --c-border:     rgba(255, 255, 255, 0.11);
+  --c-divider:    rgba(255, 255, 255, 0.07);
+  --c-success:    #8BC34A;
+  --c-danger:     #E58A8A;
+  --c-hover:      #2B2620;
+  --c-muted:      #322C26;
+  --c-danger-bg:  #3A2626;
+  --c-toggle-off: #4A443D;
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply text-foreground;
+    background: var(--c-bg);
+    min-height: 100vh;
+    transition: background 0.2s ease;
+  }
+}
+
+/* Scrollable region with no visible scrollbar (used by the matches list) */
+.hide-scrollbar {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge legacy */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;                /* Chrome/Safari */
+}
