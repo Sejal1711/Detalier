@@ -38,21 +38,22 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [matchesSentCount, setMatchesSentCount] = useState(0);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/");
   }, [status, router]);
 
-  // Pull the full client list once we're signed in. It's an internal tool with
-  // a shared pool, so everyone sees every client.
   useEffect(() => {
     if (status !== "authenticated") return;
-    fetch("/api/customers")
-      .then((r) => r.json())
-      .then((data) => {
-        setCustomers(Array.isArray(data) ? data : []);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch("/api/customers").then((r) => r.json()),
+      fetch("/api/matches-made").then((r) => r.json()),
+    ]).then(([customerData, matchesData]) => {
+      setCustomers(Array.isArray(customerData) ? customerData : []);
+      setMatchesSentCount(Array.isArray(matchesData) ? matchesData.length : 0);
+      setLoading(false);
+    });
   }, [status]);
 
   // Client-side search + status filter. Search matches name, city, or company.
@@ -66,13 +67,11 @@ export default function DashboardPage() {
     return ms && fs;
   });
 
-  // Top-of-page summary cards. "Success Stories" reuses the matched count for now
-  // until we track engagements/marriages as a separate milestone.
   const stats = [
-    { label: "Total Clients",    value: customers.length,                                          icon: Users      },
-    { label: "Active Searches",  value: customers.filter((c) => c.statusTag === "active").length,  icon: UserCheck  },
-    { label: "Matches Sent",     value: customers.filter((c) => c.statusTag === "matched").length, icon: TrendingUp },
-    { label: "Success Stories",  value: customers.filter((c) => c.statusTag === "matched").length, icon: Award      },
+    { label: "Total Clients",   value: customers.length,                                         icon: Users      },
+    { label: "Active Searches", value: customers.filter((c) => c.statusTag === "active").length, icon: UserCheck  },
+    { label: "Matches Sent",    value: matchesSentCount,                                         icon: TrendingUp },
+    { label: "Success Stories", value: customers.filter((c) => c.statusTag === "matched").length, icon: Award     },
   ];
 
   if (status === "loading" || loading) {
