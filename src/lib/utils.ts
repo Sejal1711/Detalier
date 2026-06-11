@@ -25,18 +25,3 @@ export function formatIncome(lakhs: number): string {
   if (lakhs >= 100) return `₹${(lakhs / 100).toFixed(1)} Cr/yr`;
   return `₹${lakhs} LPA`;
 }
-
-const avatarColors = [
-  "linear-gradient(135deg, #fb7185, #ec4899)",
-  "linear-gradient(135deg, #a78bfa, #8b5cf6)",
-  "linear-gradient(135deg, #60a5fa, #6366f1)",
-  "linear-gradient(135deg, #34d399, #14b8a6)",
-  "linear-gradient(135deg, #fb923c, #fb7185)",
-  "linear-gradient(135deg, #22d3ee, #3b82f6)",
-  "linear-gradient(135deg, #e879f9, #ec4899)",
-  "linear-gradient(135deg, #fbbf24, #f97316)",
-];
-
-export function getAvatarColor(id: number): string {
-  return avatarColors[id % avatarColors.length];
-}

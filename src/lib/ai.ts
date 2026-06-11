@@ -137,19 +137,3 @@ Write a warm, personalized 3-sentence introduction email.
 
   return (message.content[0] as { type: string; text: string }).text;
 }
-
-export async function generateProfileSummary(profile: Profile): Promise<string> {
-  const data = profileSummaryForAI(profile);
-
-  const prompt = `You are an expert Indian matrimonial matchmaker. Write a warm, 2-sentence professional summary of this person for their matchmaking profile. Focus on their most appealing qualities and what makes them a great match. Keep it positive and authentic.
-
-Profile: ${JSON.stringify(data)}`;
-
-  const message = await anthropic.messages.create({
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 200,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  return (message.content[0] as { type: string; text: string }).text;
-}

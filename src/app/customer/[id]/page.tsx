@@ -157,6 +157,12 @@ export default function CustomerDetailPage() {
   const statusStyle = STATUS_MAP[customer.statusTag ?? "active"] ?? STATUS_MAP.active;
   const clientAv = av(customer.gender);
 
+  // Once the matches card is on screen, the left biodata can grow as tall as it
+  // likes (the matches card fills the right). Until then, cap the left column to
+  // the viewport and let it scroll internally so it doesn't leave a blank gap
+  // beside the short right panel.
+  const hasMatchesPanel = matches.length > 0 || generating;
+
   return (
     <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'Inter', sans-serif" }}>
 
@@ -178,8 +184,10 @@ export default function CustomerDetailPage() {
         <span style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary }}>{customer.firstName} {customer.lastName}</span>
       </div>
 
-      {/* Two-column body — both columns stretch to the same (tallest) height */}
-      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 44px", display: "flex", gap: 24, alignItems: "stretch" }}>
+      {/* Two-column body. Once the matches card is present we stretch both columns
+          to equal height (matches card fills the right). Before that, let them
+          flow naturally so nothing gets clipped or forced. */}
+      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "28px 44px", display: "flex", gap: 24, alignItems: hasMatchesPanel ? "stretch" : "flex-start" }}>
 
         {/* ── LEFT: Biodata ── */}
         <div style={{ flex: "0 0 58%", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -301,82 +309,93 @@ export default function CustomerDetailPage() {
           )}
         </div>
 
-        {/* ── RIGHT: Matchmaking Panel — height matches LEFT column; matches scroll internally ── */}
-        <div style={{ flex: 1, position: "relative", minWidth: 0 }}>
-          <div style={{
-            position: "absolute", inset: 0,
-            display: "flex", flexDirection: "column", gap: 14,
-          }}>
+        {/* ── RIGHT: Matchmaking Panel ──
+            With matches present: absolutely fill the wrapper so the panel matches
+            the (taller) left column's height and the matches list scrolls inside.
+            Without matches: just stack naturally so there's no forced blank gap. */}
+        <div style={{ flex: 1, minWidth: 0, position: hasMatchesPanel ? "relative" : "static" }}>
+          <div style={hasMatchesPanel
+            ? { position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: 14 }
+            : { display: "flex", flexDirection: "column", gap: 14 }
+          }>
 
-          {/* Suggested Matches — flex-grows to fill space above the notes */}
-          <div style={{ background: C.surface, borderRadius: 12, border: `0.5px solid ${C.border}`, overflow: "hidden", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-            <div style={{
-              padding: "14px 18px", borderBottom: `0.5px solid ${C.divider}`,
-              display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
-            }}>
-              <Heart style={{ width: 14, height: 14, color: C.primary }} />
-              <h2 style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary, margin: 0 }}>Suggested Matches</h2>
-              <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-                {matches.length > 0 && (
-                  <span style={{ fontSize: 11, background: C.blush, color: C.primary, padding: "2px 7px", borderRadius: 20 }}>
-                    {matches.length}
-                  </span>
-                )}
-                {matches.length > 0 && !generating && (
-                  <button
-                    onClick={() => generateMatches(true)}
-                    title="Regenerate matches with AI"
-                    style={{ background: "none", border: "none", cursor: "pointer", color: C.textSecondary, display: "flex", alignItems: "center", padding: 2 }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = C.textSecondary)}
-                  >
-                    <RefreshCw style={{ width: 13, height: 13 }} />
-                  </button>
-                )}
+          {/* When there are no matches yet, skip the big card — just a compact
+              prompt + button. The full card only appears once matches exist
+              (or while the AI is generating them). */}
+          {matches.length === 0 && !generating ? (
+            <div style={{ flexShrink: 0, padding: "4px 2px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                <Heart style={{ width: 14, height: 14, color: C.primary }} />
+                <h2 style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary, margin: 0 }}>Suggested Matches</h2>
               </div>
+              <button
+                onClick={() => generateMatches(false)}
+                style={{
+                  width: "100%", padding: "11px 0", background: C.primary, color: "#FFF",
+                  border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500,
+                  cursor: "pointer", fontFamily: "Inter, sans-serif",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                }}
+              >
+                <Sparkles style={{ width: 13, height: 13 }} />
+                Find Matches
+              </button>
+              <p style={{ fontSize: 12, color: C.textSecondary, textAlign: "center", margin: "10px 0 0" }}>
+                No matches yet — let&apos;s find someone special.
+              </p>
             </div>
+          ) : (
+            <div style={{ background: C.surface, borderRadius: 12, border: `0.5px solid ${C.border}`, overflow: "hidden", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+              <div style={{
+                padding: "14px 18px", borderBottom: `0.5px solid ${C.divider}`,
+                display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
+              }}>
+                <Heart style={{ width: 14, height: 14, color: C.primary }} />
+                <h2 style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary, margin: 0 }}>Suggested Matches</h2>
+                <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+                  {matches.length > 0 && (
+                    <span style={{ fontSize: 11, background: C.blush, color: C.primary, padding: "2px 7px", borderRadius: 20 }}>
+                      {matches.length}
+                    </span>
+                  )}
+                  {matches.length > 0 && !generating && (
+                    <button
+                      onClick={() => generateMatches(true)}
+                      title="Regenerate matches with AI"
+                      style={{ background: "none", border: "none", cursor: "pointer", color: C.textSecondary, display: "flex", alignItems: "center", padding: 2 }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = C.textSecondary)}
+                    >
+                      <RefreshCw style={{ width: 13, height: 13 }} />
+                    </button>
+                  )}
+                </div>
+              </div>
 
-            {generating ? (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 18px", textAlign: "center" }}>
-                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.4, ease: "linear" }} style={{ display: "inline-block", marginBottom: 12 }}>
-                  <Sparkles style={{ width: 22, height: 22, color: C.primary }} />
-                </motion.div>
-                <p style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6, margin: 0 }}>
-                  Finding the best matches<br />and scoring them with AI…
-                </p>
-              </div>
-            ) : matches.length === 0 ? (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 18px", textAlign: "center" }}>
-                <p style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.7, margin: "0 0 16px" }}>
-                  No matches generated yet.<br />Let&apos;s find someone special.
-                </p>
-                <button
-                  onClick={() => generateMatches(false)}
-                  style={{
-                    padding: "9px 20px", background: C.primary, color: "#FFF",
-                    border: "none", borderRadius: 8, fontSize: 13, fontWeight: 500,
-                    cursor: "pointer", fontFamily: "Inter, sans-serif",
-                    display: "inline-flex", alignItems: "center", gap: 7,
-                  }}
-                >
-                  <Sparkles style={{ width: 13, height: 13 }} />
-                  Find Matches
-                </button>
-              </div>
-            ) : (
-              <div className="hide-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "10px", display: "flex", flexDirection: "column", gap: 8 }}>
-                {matches.map((match, i) => (
-                  <MatchCard
-                    key={match.id}
-                    match={match}
-                    index={i}
-                    onSend={() => handleSendMatch(match)}
-                    onView={() => setViewProfile(match.profile)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+              {generating ? (
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "40px 18px", textAlign: "center" }}>
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.4, ease: "linear" }} style={{ display: "inline-block", marginBottom: 12 }}>
+                    <Sparkles style={{ width: 22, height: 22, color: C.primary }} />
+                  </motion.div>
+                  <p style={{ fontSize: 13, color: C.textSecondary, lineHeight: 1.6, margin: 0 }}>
+                    Finding the best matches<br />and scoring them with AI…
+                  </p>
+                </div>
+              ) : (
+                <div className="hide-scrollbar" style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "10px", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {matches.map((match, i) => (
+                    <MatchCard
+                      key={match.id}
+                      match={match}
+                      index={i}
+                      onSend={() => handleSendMatch(match)}
+                      onView={() => setViewProfile(match.profile)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Generate Introduction */}
           {matches.length > 0 && !generating && (
@@ -495,25 +514,80 @@ export default function CustomerDetailPage() {
                 <X style={{ width: 17, height: 17 }} />
               </button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-              {[
-                { label: "Height",        value: viewProfile.height ? formatHeight(viewProfile.height) : "—" },
-                { label: "Education",     value: viewProfile.degree ?? "—" },
-                { label: "Company",       value: viewProfile.currentCompany ?? "—" },
-                { label: "Designation",   value: viewProfile.designation ?? "—" },
-                { label: "Income",        value: viewProfile.income ? formatIncome(viewProfile.income) : "—" },
-                { label: "Religion",      value: viewProfile.religion ?? "—" },
-                { label: "Caste",         value: viewProfile.caste ?? "—" },
-                { label: "City",          value: viewProfile.city },
-                { label: "Diet",          value: viewProfile.diet?.replace("_", " ") ?? "—" },
-                { label: "Marital Status",value: viewProfile.maritalStatus?.replace("_", " ") ?? "—" },
-              ].map(({ label, value }) => (
-                <div key={label} style={{ background: C.bg, borderRadius: 8, padding: "10px 13px" }}>
-                  <p style={{ fontSize: 10, color: C.textSecondary, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</p>
-                  <p style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary, margin: 0, textTransform: "capitalize" }}>{value}</p>
+            {/* Full biodata, grouped into sections so it reads like a profile, not a table. */}
+            {[
+              {
+                title: "Personal",
+                fields: [
+                  { label: "Age",            value: `${getAge(viewProfile.dateOfBirth)} yrs` },
+                  { label: "Date of Birth",  value: viewProfile.dateOfBirth },
+                  { label: "Height",         value: viewProfile.height ? formatHeight(viewProfile.height) : "—" },
+                  { label: "Marital Status", value: viewProfile.maritalStatus?.replace("_", " ") ?? "—" },
+                  { label: "Complexion",     value: viewProfile.complexion ?? "—" },
+                  { label: "Star Sign",      value: viewProfile.starSign ?? "—" },
+                  { label: "Mangalik",       value: viewProfile.mangalik ? "Yes" : "No" },
+                  { label: "Languages",      value: viewProfile.languagesKnown?.join(", ") ?? "—" },
+                ],
+              },
+              {
+                title: "Education & Career",
+                fields: [
+                  { label: "Education",   value: viewProfile.degree ?? "—" },
+                  { label: "College",     value: viewProfile.undergradCollege ?? "—" },
+                  { label: "Company",     value: viewProfile.currentCompany ?? "—" },
+                  { label: "Designation", value: viewProfile.designation ?? "—" },
+                  { label: "Income",      value: viewProfile.income ? formatIncome(viewProfile.income) : "—" },
+                ],
+              },
+              {
+                title: "Family & Background",
+                fields: [
+                  { label: "Religion",      value: viewProfile.religion ?? "—" },
+                  { label: "Caste",         value: viewProfile.caste ?? "—" },
+                  { label: "Gotra",         value: viewProfile.gotra ?? "—" },
+                  { label: "Mother Tongue", value: viewProfile.motherTongue ?? "—" },
+                  { label: "Father's Job",  value: viewProfile.fatherOccupation ?? "—" },
+                  { label: "Mother's Job",  value: viewProfile.motherOccupation ?? "—" },
+                  { label: "Siblings",      value: String(viewProfile.siblings ?? 0) },
+                  { label: "Family Type",   value: viewProfile.familyType?.replace("_", " ") ?? "—" },
+                ],
+              },
+              {
+                title: "Lifestyle & Preferences",
+                fields: [
+                  { label: "Diet",         value: viewProfile.diet?.replace("_", " ") ?? "—" },
+                  { label: "Drinking",     value: viewProfile.drinking ?? "—" },
+                  { label: "Smoking",      value: viewProfile.smoking ?? "—" },
+                  { label: "Wants Kids",   value: viewProfile.wantKids ?? "—" },
+                  { label: "Relocate",     value: viewProfile.openToRelocate ?? "—" },
+                  { label: "Open to Pets", value: viewProfile.openToPets ?? "—" },
+                ],
+              },
+              {
+                title: "Location & Contact",
+                fields: [
+                  { label: "City",        value: viewProfile.city },
+                  { label: "Country",     value: viewProfile.country ?? "India" },
+                  { label: "Visa Status", value: viewProfile.visaStatus ?? "—" },
+                  { label: "Phone",       value: viewProfile.phone ?? "—" },
+                  { label: "Email",       value: viewProfile.email ?? "—" },
+                ],
+              },
+            ].map((section) => (
+              <div key={section.title} style={{ marginBottom: 18 }}>
+                <p style={{ fontSize: 10, fontWeight: 500, color: C.primary, letterSpacing: "0.07em", textTransform: "uppercase", margin: "0 0 8px" }}>
+                  {section.title}
+                </p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {section.fields.map(({ label, value }) => (
+                    <div key={label} style={{ background: C.bg, borderRadius: 8, padding: "10px 13px" }}>
+                      <p style={{ fontSize: 10, color: C.textSecondary, margin: "0 0 2px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</p>
+                      <p style={{ fontSize: 13, fontWeight: 500, color: C.textPrimary, margin: 0, textTransform: label === "Email" ? "none" : "capitalize", wordBreak: "break-word" }}>{value}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </motion.div>
         </div>
       )}
